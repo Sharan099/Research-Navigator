@@ -1,6 +1,5 @@
 ---
 title: Research Navigator
-emoji: 🔎
 colorFrom: blue
 colorTo: teal
 sdk: docker
