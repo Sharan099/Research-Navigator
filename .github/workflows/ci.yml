@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   python:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python: ['3.11', '3.12', '3.13']
@@ -35,7 +35,7 @@ jobs:
           name: coverage-${{ matrix.python }}
           path: coverage.xml
   postgres:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:16-alpine
@@ -60,6 +60,7 @@ jobs:
           GEMINI_API_KEY: ''
           OPENALEX_API_KEY: ''
   browser:
+    # Playwright 1.58 cannot install Chromium dependencies on ubuntu-latest (26.04).
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -85,7 +86,7 @@ jobs:
             playwright-report/
             test-results/
   dependency-audit:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -100,7 +101,7 @@ jobs:
       - run: npm audit --audit-level=high
   container:
     needs: [python, postgres, browser, dependency-audit]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: docker build --label org.opencontainers.image.revision=${{ github.sha }} -t research-navigator:verified .
@@ -129,7 +130,7 @@ jobs:
   publish:
     needs: container
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
