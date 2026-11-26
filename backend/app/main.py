@@ -280,7 +280,7 @@ def create_app(settings: Settings | None = None, openalex_client: OpenAlexClient
             "llm_enabled": bool(configuration.gemini_api_key or configuration.groq_api_key),
             "llm_model": configuration.gemini_model
             if configuration.gemini_api_key
-            else configuration.groq_model
+            else configuration.groq_models[0]
             if configuration.groq_api_key
             else None,
         }

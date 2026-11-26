@@ -1,6 +1,6 @@
 # Research Navigator — production readiness audit
 
-**Later remediation, November 26:** [Current verification](docs/VERIFICATION.md) records code fixes,
+**Later remediation, November 26:** [Current verification](../../VERIFICATION.md) records code fixes,
 new test results and present deployment decisions. The original audit below remains unchanged in
 meaning and describes its dated source/data snapshot. Later anonymous browser isolation does not
 satisfy the internal employee-service access-control requirements.
@@ -8,7 +8,7 @@ satisfy the internal employee-service access-control requirements.
 **Audit date:** 2026-11-25. **Data observation:** 19:04:34 UTC. **Release inspected:** 0.2.0.
 The workspace has no Git repository, so there is no commit SHA binding these observations to a release.
 This is a personal, single-process application, not a deployed employee service. No application code
-was modified to perform this audit. The [evidence index](evaluation/audits/2026-11-25/README.md)
+was modified to perform this audit. The private evidence bundle described by the [archive index](README.md)
 contains logs, measurements, reproducible probes, Graphify output, and source checksums.
 
 ## Decision
@@ -296,4 +296,4 @@ Before relying on automated recovery or result correctness, resolve G01–G05 in
 identity/ownership controls, approved objectives, complete telemetry and tested recovery, then execute
 PostgreSQL/container/remote-CI gates and labeled scientific-quality evaluation. This audit did not fix
 or close those items. The [engineering scorecard](ENGINEERING_SCORECARD.md) contains claims safe to
-use in an interview, and the [learning guide](LEARNING_GUIDE.md) explains the concepts and failure cases.
+use in an interview, and the [learning guide](../../../LEARNING_GUIDE.md) explains the concepts and failure cases.

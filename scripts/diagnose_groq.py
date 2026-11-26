@@ -48,7 +48,7 @@ def diagnose(settings, live=False, max_attempts=2):
         usage = ProviderRuntime(settings, sessions).usage()
         report["usage_before"] = usage
         try:
-            report["configured_model_listed"] = settings.groq_model in list_models(settings)
+            report["configured_model_listed"] = set(settings.groq_models) <= list_models(settings)
         except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
             return {
                 **report,

@@ -141,7 +141,7 @@ def verify_model(settings, source, ledger_sessions, remaining, provider="gemini"
             plan = client.post("/api/search", json={"message": "Find the best research papers."}).json()
             planning_ok = plan.get("parser_mode") == provider
             result = {
-                "model": settings.gemini_model if provider == "gemini" else settings.groq_model,
+                "model": settings.gemini_model if provider == "gemini" else settings.groq_models[0],
                 "planning_passed": planning_ok,
                 "planning_status": plan.get("status"),
                 "answer_passed": False,

@@ -36,7 +36,7 @@ def config(tmp_path, monkeypatch):
         )
         session.commit()
     engine.dispose()
-    monkeypatch.setattr(diagnostic, "list_models", lambda _: {settings.groq_model})
+    monkeypatch.setattr(diagnostic, "list_models", lambda _: set(settings.groq_models))
     return settings
 
 

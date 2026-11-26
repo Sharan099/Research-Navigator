@@ -28,10 +28,6 @@ ROOT_FILES = {
     "CODE_MAP.md",
     "LEARNING_GUIDE.md",
     "SOURCE_REGISTRY.md",
-    "GAP_ANALYSIS.md",
-    "PRODUCTION_READINESS_REPORT.md",
-    "DATA_QUALITY_REPORT.md",
-    "ENGINEERING_SCORECARD.md",
     "AGENTS.md",
 }
 SOURCE_DIRS = {"backend", "frontend", "migrations", "tests", "scripts", "docs", ".github"}
@@ -52,6 +48,11 @@ def release_files(root=None):
                 yield path
     if (root / "evaluation/README.md").is_file():
         yield root / "evaluation/README.md"
+    if (root / "evaluation/HUMAN_REVIEW.md").is_file():
+        yield root / "evaluation/HUMAN_REVIEW.md"
+    for name in ("docs/media/research-navigator-demo.mp4", "docs/media/demo-poster.jpg"):
+        if (root / name).is_file():
+            yield root / name
     for path in sorted((root / "evaluation/published").glob("*")):
         if path.is_file() and not path.is_symlink() and path.suffix in {".json", ".md"}:
             yield path

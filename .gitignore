@@ -71,6 +71,7 @@ data/
 *.dump
 *.backup
 *.mp4
+!docs/media/research-navigator-demo.mp4
 *.webm
 *.wav
 *.onnx

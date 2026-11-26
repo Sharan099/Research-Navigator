@@ -1,5 +1,17 @@
 # Research Navigator: 60-second demo
 
+## Current cut: live recording (November 26)
+
+`docs/media/research-navigator-demo.mp4` replaces the earlier narrated edit described below. It is a
+real browser session against a live server on a disposable database copy: natural-language search,
+a follow-up refinement, opening a paper, asking the LLM to explain it, checking the cited quote, and
+the activity log showing the Gemini → Groq fallback. Responses are live (OpenAlex, Groq
+`openai/gpt-oss-120b` after Gemini returned 429). The only edit is speeding up backend waits longer than
+two seconds. Reproduce with `node scripts/record_live_demo.cjs`, `node scripts/record_live_demo.cjs --cards`,
+then `python scripts/build_live_demo.py`.
+
+## Earlier cut (superseded)
+
 Audience: a technical hiring manager reviewing a working-student data engineering project.
 Format: 1920 × 1080 MP4, local synthesized English narration, visible captions and an SRT transcript.
 

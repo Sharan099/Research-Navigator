@@ -20,11 +20,20 @@ def test_export_excludes_private_data_and_generated_files(tmp_path, monkeypatch)
     (tmp_path / "evaluation/published/summary.json").write_text('{"publications": 1}', encoding="utf-8")
     (tmp_path / "evaluation/reports").mkdir()
     (tmp_path / "evaluation/reports/private.json").write_text("private fixture", encoding="utf-8")
+    (tmp_path / "docs/audits/2026-11-25").mkdir(parents=True)
+    (tmp_path / "docs/audits/2026-11-25/GAP_ANALYSIS.md").write_text("Archived findings", encoding="utf-8")
+    (tmp_path / "evaluation/HUMAN_REVIEW.md").write_text("Unfilled review rubric", encoding="utf-8")
     monkeypatch.setattr(prepare_release, "ROOT", tmp_path)
     result = prepare_release.export_release()
     destination = Path(result["directory"])
     files = {str(path.relative_to(destination)).replace("\\", "/") for path in destination.rglob("*") if path.is_file()}
-    assert files == {"README.md", "backend/app.py", "evaluation/published/summary.json"}
+    assert files == {
+        "README.md",
+        "backend/app.py",
+        "evaluation/published/summary.json",
+        "docs/audits/2026-11-25/GAP_ANALYSIS.md",
+        "evaluation/HUMAN_REVIEW.md",
+    }
     assert result["credential_value_scan"] == "passed"
 
 

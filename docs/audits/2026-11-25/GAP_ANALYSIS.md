@@ -1,7 +1,7 @@
 # Research Navigator — prioritized gap analysis
 
 **Later remediation, November 26:** This register preserves the November 25 findings. See
-[current verification](docs/VERIFICATION.md#remediation-against-the-historical-gap-register) for
+[current verification](../../VERIFICATION.md#remediation-against-the-historical-gap-register) for
 scoped fixes to G01–G08, regression evidence and remaining limits. Public-demo browser ownership
 was also added later; it does not provide employee authentication or roles. Historical FAIL rows
 below describe the audit snapshot, not an assertion that every defect remains present.
@@ -10,7 +10,7 @@ below describe the audit snapshot, not an assertion that every defect remains pr
 scope, not a cosmetic code-quality score. **P0** blocks the named deployment; **P1** can undermine
 recovery or requested results; **P2** weakens correctness, operability or scale; **P3** is a deferred
 capability or hardening improvement. Evidence IDs resolve through the
-[audit index](evaluation/audits/2026-11-25/README.md).
+[archive index](README.md), which identifies the private evidence bundle.
 
 ## Priority register
 
@@ -45,7 +45,7 @@ bug in a deliberately personal app.
 
 ### G01 — Managed daily backup can be empty
 
-**Root cause:** [daily_backup](backend/app/maintenance.py) skips copying if today's filename exists,
+**Root cause:** [daily_backup](../../../backend/app/maintenance.py) skips copying if today's filename exists,
 then checks only `PRAGMA quick_check`. An empty file is a structurally valid zero-table SQLite database.
 The probe had 301 source publications and zero backup tables, yet backup acceptance returned normally.
 Potential retention of this false recovery point could remove older useful copies; actual research
@@ -62,7 +62,7 @@ restores with schema, count, FK and readiness checks. All tests use separate fil
 
 ### G02 — Year-only filters trust upstream compliance
 
-**Root cause:** [matches_dates](backend/app/repository.py) returns true when explicit date fields are
+**Root cause:** [matches_dates](../../../backend/app/repository.py) returns true when explicit date fields are
 absent, ignoring `year_from/year_to`. The adapter sends the correct provider filter, but the service
 does not independently enforce it during ingestion/cache coverage checks. An out-of-contract provider
 returned a 1900 work for a since-2022 request and the app returned it.
@@ -76,7 +76,7 @@ refresh and cache reuse are checked; the 1900 fixture cannot satisfy since-2022.
 
 ### G03 — Relevance cutoff hides the strongest match
 
-**Root cause:** [local_search](backend/app/repository.py) takes 250 SQL candidates without relevance
+**Root cause:** [local_search](../../../backend/app/repository.py) takes 250 SQL candidates without relevance
 ordering, then ranks in Python. In the 301-row fixture, a row matching all query terms and with a
 higher citation count was never eligible.
 
@@ -90,7 +90,7 @@ large-corpus query plans and latency before selecting a production index design.
 
 ### G04/G05 — Completeness and consistency have different definitions
 
-**Root cause:** [quality](backend/app/main.py) counts non-null strings as present, while the evaluator
+**Root cause:** [quality](../../../backend/app/main.py) counts non-null strings as present, while the evaluator
 recognizes empty values as missing. The raw validator checks individual year/date validity without
 checking their agreement. These are two different defects, even though no current real record had
 a date/year conflict.
@@ -105,7 +105,7 @@ force optional source completeness to 100% by inventing values.
 
 ### G06/G07/G08 — Operational evidence omits important traffic
 
-**Root cause:** [LocalPolicy](backend/app/http_policy.py) returns policy/admission rejections before
+**Root cause:** [LocalPolicy](../../../backend/app/http_policy.py) returns policy/admission rejections before
 the metric finalizer. Default Uvicorn logging config does not enable this application's INFO logger.
 Cache counters are recorded in the chat emitter, while standalone search does not pass that emitter.
 The probe produced 5 HTTP 200 and 15 HTTP 429 responses, no exported 429 lines, no standalone cache
@@ -130,7 +130,7 @@ stream replay and pagination isolation tests. Local Host/Origin validation is no
 real tasks, relevance judgments, a reference universe if making recall claims, adjudicated source
 support labels and thresholds. Record unsupported claims/reviewed claims. A quote-match test, citation
 count, OpenAlex total or LLM judge cannot replace these denominators. Leave scores unreported until
-the evaluation actually runs. Start from [the existing rubric](evaluation/HUMAN_REVIEW.md).
+the evaluation actually runs. Start from [the existing rubric](../../../evaluation/HUMAN_REVIEW.md).
 
 **G10 — Executable release evidence.** Docker daemon access was denied; PostgreSQL checks skipped;
 there is no remote CI run. Run isolated PostgreSQL migration/concurrent-upsert and restore checks,

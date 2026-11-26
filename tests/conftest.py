@@ -36,11 +36,13 @@ def mock_http(monkeypatch, offline_http):
 
     monkeypatch.setattr(httpx, "AsyncClient", client)
 
-    def install(payload=None, status=200, error=None, raw=None):
+    def install(payload=None, status=200, error=None, raw=None, route=None):
         requests = []
 
         def respond(request):
             requests.append(request)
+            if route:
+                return route(request)
             if error:
                 raise error
             return httpx.Response(status, text=raw) if raw is not None else httpx.Response(status, json=payload)

@@ -146,10 +146,10 @@ real app routes on a temporary research copy, with Gemini and scholarly retrieva
 usage ledger is charged; no limits are reset or raised. Safe results go to ignored
 `.runtime/groq-diagnostic.json` without provider bodies or keys.
 
-On November 26 the configured model was listed, but shared AI usage was **3/3**. The authorized live
-check made **zero generation requests**. Offline tests verify planning, answers, citation rejection
-and fallback. Successful live generation remains unverified. Counters reset by UTC date; rerun after
-allowance is available. Groq's separate allowance cannot bypass the shared AI-turn cap.
+Later on November 26, live app-route runs on a disposable database copy verified Groq generation:
+Gemini returned 503, timeout and 429 responses, and `openai/gpt-oss-120b` planned searches and produced
+explanations whose quotes passed citation validation. One run's Groq answer failed citation validation
+and was correctly downgraded to evidence only. The real usage ledger was not modified.
 
 See the [official GHCR documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
 for registry authentication and package visibility.

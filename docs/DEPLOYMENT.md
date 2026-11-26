@@ -1,5 +1,19 @@
 # Release and deployment
 
+## Published repository and CI observation
+
+The repository is now public at [Sharan099/Research-Navigator](https://github.com/Sharan099/Research-Navigator).
+At commit `959fcfa`, the [observed workflow](https://github.com/Sharan099/Research-Navigator/actions/runs/45839781017)
+passed Python 3.11/3.12/3.13, PostgreSQL and the dependency audit. Browser setup failed during
+`npx playwright install --with-deps chromium`, before browser tests. Container and publication jobs
+were skipped. Public annotations report exit code 1; detailed logs require access unavailable to this
+agent, so the installation root cause is not established. These results supersede the earlier
+"remote CI not executed" observations below for these specific jobs only.
+
+The GitHub README is now a concise project entry page. The Hugging Face YAML metadata is in
+[the Space template](huggingface/README.md). Copy that template as `README.md` only in a separate
+Space checkout alongside the application/Dockerfile; keep the GitHub README free of Space metadata.
+
 ## Latest preparation: November 26
 
 The [push guide](GITHUB.md) lists required source, ignored files, Git steps and GHCR usage.
@@ -20,8 +34,8 @@ see [VERIFICATION.md](VERIFICATION.md) for subsequent application fixes and regr
 ## Groq fallback update
 
 The latest quota-fallback change passed 271 Python tests (2 PostgreSQL checks skipped) and 34 Node
-frontend tests. Gemini remains first choice. Groq is selected for Gemini provider quota exhaustion
-or absent Gemini configuration, while shared AI-turn limits and citation validation remain enforced.
+frontend tests. Gemini remains first choice. Groq is selected for any Gemini provider failure
+(updated November 26; previously quota only) or absent Gemini configuration, while shared AI-turn limits and citation validation remain enforced.
 Groq model discovery returned HTTP 200 and listed the locally configured `openai/gpt-oss-120b`.
 This was a metadata request; no live Groq generation was performed. No provider key was printed.
 Git ignore checks confirmed 20 private/generated paths are excluded and 9 required source paths

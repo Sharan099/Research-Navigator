@@ -78,7 +78,7 @@ All backend paths below are relative to `backend/app/`.
 | Query planning/clarification | `interpreter.py` | schemas, providers, service | reliability, topics |
 | Abstract evidence/citations | `answers.py` | repository, schemas, providers | topics, operations_hardening |
 | Gemini response parsing/failure diagnostics | `gemini.py` | answers, interpreter, telemetry | test_gemini, topics |
-| Gemini quota fallback to Groq | `llm.py` | interpreter, answers, providers, config, schemas, frontend modes | test_llm_fallback |
+| Gemini failure fallback to Groq model list | `llm.py` | interpreter, answers, providers, config (`groq_models`), schemas, frontend modes | test_llm_fallback |
 | Explicit live Gemini verification | root `scripts/diagnose_gemini.py` | config, providers, app routes, operations backup | test_gemini_diagnostic |
 | Explicit live Groq verification | root `scripts/diagnose_groq.py` | shared provider-selectable route verifier in diagnose_gemini, config, providers | test_groq_diagnostic; at most two attempts; no quota resets |
 | Shared HTTP/retry/quota | `providers.py` | config, models, telemetry | operations_hardening |
@@ -90,12 +90,14 @@ All backend paths below are relative to `backend/app/`.
 | Retention/daily backup | `maintenance.py` | chats, models, scripts/operations.py | local_release, scripts/test_operations.py |
 | UI behavior/style/accessibility | frontend files | response contracts | frontend.test.cjs, tests/browser/workspace.spec.cjs |
 | Showcase recording/screenshots | `scripts/record_showcase.cjs` | scripts/showcase_server.py, showcase/ | --rehearse; recorded interaction assertions; video playback review |
-| 60-second narrated demo edit | `scripts/build_demo.py` | scripts/render_demo_cards.cjs, docs/DEMO_STORYBOARD.md, original showcase footage | full audio/video decode, narration duration checks, source hash, playback metadata |
+| 60-second live product demo | `scripts/record_live_demo.cjs` | scripts/build_live_demo.py, docs/media/ (tracked MP4), showcase/demo-60s/ | --rehearse; full decode; timeline.json waits |
+| Earlier 60-second narrated demo edit | `scripts/build_demo.py` | scripts/render_demo_cards.cjs, docs/DEMO_STORYBOARD.md, original showcase footage | full audio/video decode, narration duration checks, source hash, playback metadata |
 | Repeatable evaluation | `scripts/evaluate.py` | evaluation/README.md, reports | disposable benchmark and report integrity gates |
 | Completeness definitions | `quality.py` | main, scripts/evaluate.py | test_portfolio_hardening |
 | Synthetic acquisition fixture | root `scripts/synthetic_provider.py` | scripts/browser_server.py, scripts/evaluate.py | browser suites, test_portfolio_hardening |
 | November 26 remediation | `repository.py`, `maintenance.py`, `http_policy.py` | quality, providers, telemetry, service | test_portfolio_hardening; docs/VERIFICATION.md |
-| Dated readiness audit | PRODUCTION_READINESS_REPORT.md | DATA_QUALITY_REPORT.md, GAP_ANALYSIS.md, ENGINEERING_SCORECARD.md, evaluation/audits/2026-11-25/ | preserved logs, Graphify graph, reproducible isolated probes/load/recovery |
+| Dated readiness audit | `docs/audits/2026-11-25/` | readiness, data quality, gaps, scorecard; private evaluation/audits/2026-11-25/ | preserved historical evidence; current verification in docs/VERIFICATION.md |
+| Public documentation | root `README.md`, `docs/README.md` | ARCHITECTURE, SETUP, operations, verification; separate Hugging Face README template | local link checks; no application contract changes |
 | Installation/CI/container | pyproject, locks, Dockerfile, compose | .github/workflows/ci.yml | local release_check.py; remote CI when connected |
 | Clean publication export | root `scripts/prepare_release.py` | source allowlist, credential scan, .runtime/release-* | test_prepare_release |
 

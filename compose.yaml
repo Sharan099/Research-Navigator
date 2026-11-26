@@ -22,7 +22,7 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
-      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-120b,openai/gpt-oss-20b}
       GROQ_REQUESTS_PER_DAY: ${GROQ_REQUESTS_PER_DAY:-6}
       CACHE_TTL_HOURS: ${CACHE_TTL_HOURS:-24}
       AI_TURNS_PER_DAY: ${AI_TURNS_PER_DAY:-3}

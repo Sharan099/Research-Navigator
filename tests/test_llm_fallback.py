@@ -1,4 +1,4 @@
-"""Quota-only switching, shared budgets and citation checks use synthetic providers."""
+"""Gemini-to-Groq switching, Groq model order, shared budgets and citation checks use synthetic providers."""
 
 import asyncio
 import json
@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 
 from backend.app.config import Settings
 from backend.app.database import create_database_engine
+from backend.app.gemini import LLMFailure
 from backend.app.llm import generate_json
 from backend.app.main import create_app
 from backend.app.models import Base, DailyUsage, Publication
@@ -38,11 +39,65 @@ def test_successful_gemini_never_calls_groq(mock_http):
     assert len(requests) == 1 and requests[0].url.host == "generativelanguage.googleapis.com"
 
 
-def test_gemini_timeout_never_calls_groq(mock_http):
-    requests = mock_http(error=httpx.ReadTimeout("synthetic timeout"))
-    with pytest.raises(httpx.ReadTimeout):
-        asyncio.run(generate_json(Settings(gemini_api_key="synthetic-gemini", groq_api_key="synthetic-groq"), prompt()))
-    assert len(requests) == 1 and requests[0].url.host == "generativelanguage.googleapis.com"
+def gemini_fails_then_groq(error=None, status=500, groq=None):
+    def route(request):
+        if "googleapis" in request.url.host:
+            if error:
+                raise error
+            return httpx.Response(status, json={})
+        return groq(request) if groq else httpx.Response(200, json=envelope({"query": "robotics"}))
+
+    return route
+
+
+@pytest.mark.parametrize(
+    "error,status,code",
+    [
+        (httpx.ReadTimeout("synthetic"), None, "provider_timeout"),
+        (None, 503, "provider_unavailable"),
+        (None, 404, "provider_model_unavailable"),
+    ],
+)
+def test_gemini_failure_switches_to_groq_with_reason(mock_http, error, status, code):
+    requests = mock_http(route=gemini_fails_then_groq(error, status))
+    events = []
+
+    async def emit(*event):
+        events.append(event)
+
+    text, provider, warnings = asyncio.run(
+        generate_json(
+            Settings(gemini_api_key="synthetic-gemini", groq_api_key="synthetic-groq", provider_attempts=1),
+            prompt(),
+            emit=emit,
+        )
+    )
+    assert provider == "groq" and json.loads(text)["query"] == "robotics"
+    assert code in warnings[0] and events[0][2]["reason"] == code
+    assert requests[-1].url.host == "api.groq.com"
+
+
+def test_groq_tries_next_free_model_when_one_is_rate_limited(mock_http):
+    def groq(request):
+        model = json.loads(request.content)["model"]
+        return httpx.Response(429, json={}) if model == "first-model" else httpx.Response(200, json=envelope({"ok": 1}))
+
+    requests = mock_http(route=gemini_fails_then_groq(groq=groq))
+    settings = Settings(
+        gemini_api_key="", groq_api_key="synthetic-groq", groq_model="first-model, second-model", provider_attempts=1
+    )
+    assert settings.groq_models == ("first-model", "second-model")
+    _, provider, warnings = asyncio.run(generate_json(settings, prompt()))
+    assert provider == "groq" and any("second-model" in warning for warning in warnings)
+    assert [json.loads(r.content)["model"] for r in requests] == ["first-model", "second-model"]
+
+
+def test_groq_auth_failure_does_not_try_other_models(mock_http):
+    requests = mock_http(status=401, payload={})
+    settings = Settings(gemini_api_key="", groq_api_key="synthetic-groq", groq_model="a,b")
+    with pytest.raises(LLMFailure):
+        asyncio.run(generate_json(settings, prompt()))
+    assert len(requests) == 1
 
 
 def test_groq_primary_when_gemini_not_configured(mock_http):
@@ -86,7 +141,7 @@ def test_quota_switch_preserves_one_shared_turn_and_provider_counts(tmp_path, ge
                     },
                 )
                 assert json.loads(text)["query"] == "robotics" and provider == "groq"
-                assert "quota" in warnings[0]
+                assert "provider_rate_limit" in warnings[0] or "local_budget_exhausted" in warnings[0]
         finally:
             await runtime.close()
 
@@ -159,19 +214,20 @@ def test_groq_planning_and_clarification_mode(fallback_app, mock_http):
 
 
 @pytest.mark.parametrize("status", [401, 403, 500])
-def test_nonquota_failure_does_not_switch(tmp_path, mock_http, status):
+def test_nonquota_gemini_failure_switches_to_groq(tmp_path, mock_http, status):
     app = create_app(
         Settings(
-            database_url=f"sqlite:///{tmp_path / 'nofallback.db'}",
+            database_url=f"sqlite:///{tmp_path / 'switch.db'}",
             gemini_api_key="synthetic-gemini",
             groq_api_key="synthetic-groq",
+            provider_attempts=1,
         )
     )
-    requests = mock_http(status=status, payload={})
+    requests = mock_http(route=gemini_fails_then_groq(status=status))
     with TestClient(app) as client:
         result = client.post("/api/search", json={"message": "robotics"}).json()
-        assert result["parser_mode"] == "rules"
-    assert all(request.url.host != "api.groq.com" for request in requests)
+        assert result["parser_mode"] == "groq"
+    assert any(request.url.host == "api.groq.com" for request in requests)
 
 
 def test_shared_ai_cap_blocks_both_providers(fallback_app, mock_http):

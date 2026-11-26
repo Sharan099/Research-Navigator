@@ -4,6 +4,17 @@ Date: November 26, 2026. Scope: the current local prototype. Application code ch
 remediation pass; the November 25 audit remains historical evidence. Existing research data was
 evaluated read-only. All writes made by tests and benchmarks used separate databases.
 
+## Subsequent publication evidence
+
+The later provider diagnostic/release run recorded **299 Python passes and two PostgreSQL skips**
+locally. The earlier 293-test coverage snapshot below remains a separate measurement.
+The public [GitHub run at commit 959fcfa](https://github.com/Sharan099/Research-Navigator/actions/runs/45839781017)
+then passed the Python 3.11/3.12/3.13 matrix, PostgreSQL job and dependency audit. Its browser dependency
+installation failed before tests, leaving container/publish skipped. This verifies the remote
+PostgreSQL test job; it does not establish a container release, deployed service or PostgreSQL backup drill.
+
+Historical reports are archived under [docs/audits/2026-11-25](audits/2026-11-25/README.md).
+
 ## Executed checks
 
 | Check | Target | Actual | Status / method |

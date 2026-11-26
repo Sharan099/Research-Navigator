@@ -63,7 +63,8 @@ the code and corresponding regression tests.
 `llm.py` adapts the same planning/evidence prompt to Gemini or Groq. Gemini is attempted first.
 A Gemini HTTP 429 or provider-specific local quota failure permits switching to Groq. Missing
 Gemini configuration also permits Groq as primary. Shared AI-turn exhaustion stops both providers.
-Authentication, timeouts and bad citations are different problems, so they do not trigger switching.
+Since November 26 any Gemini failure (quota, timeout, 5xx, auth, bad output) hands the turn to Groq,
+and the warning records the Gemini failure code. Groq-side citation failures still fall back to evidence only.
 `providers.py` charges each actual provider attempt and charges the shared AI turn only once when
 a request crosses providers. Its SQL transaction rolls back an attempted charge if a limit fails.
 No database migration is needed: the existing usage table stores a new `groq` resource row.
@@ -84,7 +85,7 @@ See [GitHub steps](docs/GITHUB.md). Provider contracts follow
 | Changed file | Responsibility and concept |
 |---|---|
 | `backend/app/config.py` | Read and validate Groq settings; secrets stay out of object representations |
-| `backend/app/llm.py` | Adapt provider contracts and switch only for quota failures |
+| `backend/app/llm.py` | Adapt provider contracts, switch on any Gemini failure, walk the Groq model list |
 | `backend/app/providers.py` | Charge provider attempts and one shared AI turn transactionally |
 | `backend/app/gemini.py` | Produce safe provider-specific failures without echoing raw exceptions |
 | `backend/app/interpreter.py` | Validate planning JSON from either provider |
@@ -147,8 +148,8 @@ This project is an example of data engineering with bounded AI assistance. Start
 [architecture](README.md#current-architecture), then follow one question through the modules.
 
 The **2026-11-25 audit** found defects as well as working controls. Read the
-[scorecard](ENGINEERING_SCORECARD.md), [full audit](PRODUCTION_READINESS_REPORT.md), and
-[gap analysis](GAP_ANALYSIS.md). The explanations below describe responsibilities; they do not
+[scorecard](docs/audits/2026-11-25/ENGINEERING_SCORECARD.md), [full audit](docs/audits/2026-11-25/PRODUCTION_READINESS_REPORT.md), and
+[gap analysis](docs/audits/2026-11-25/GAP_ANALYSIS.md). The explanations below describe responsibilities; they do not
 mean every implementation or failure case has passed. In particular, the managed daily backup,
 year-only filtering, relevance cutoff, completeness KPI and operational telemetry have known gaps.
 
@@ -340,7 +341,7 @@ compatible workloads only. Read the report's limitations before interpreting its
 | `scripts/showcase_server.py` | Copies a verified snapshot into a disposable database; empty keys and zero provider budgets prevent new source calls |
 | `scripts/record_showcase.cjs` | Uses Playwright assertions for readiness, deliberate pauses for readable footage, and labeled historical AI output; saves video, screenshots, and a chapter guide |
 
-The [showcase](showcase/README.md) demonstrates the actual interface without changing the personal
+The [showcase guide](docs/DEMO_STORYBOARD.md) describes recording the interface without changing the personal
 database. Replaying a saved answer demonstrates the UI and its stored evidence, not a successful new
 API call. The capture manifest records source provenance and the absence of external provider attempts.
 
@@ -350,7 +351,7 @@ rereading unrelated files when making the next change.
 
 ## 10. Learn the concepts through the audit
 
-Evidence IDs below refer to the [audit bundle](evaluation/audits/2026-11-25/README.md). Fake providers
+Evidence IDs below refer to the private audit bundle described in the [archive index](docs/audits/2026-11-25/README.md). Fake providers
 check our engineering behavior; they cannot prove a real provider is accurate or available.
 
 | Concept | Meaning and why it matters | Implementation | Verification and limitation |
@@ -398,7 +399,7 @@ check our engineering behavior; they cannot prove a real provider is accurate or
 The managed daily backup checks `PRAGMA quick_check`. That establishes SQLite structural validity,
 but an empty database can pass it. The isolated probe had 301 source publications and a zero-table
 backup, yet backup acceptance returned normally. The separate manual restore drill passed. These
-facts describe different paths; one does not cancel the other. See [G01](GAP_ANALYSIS.md) before
+facts describe different paths; one does not cancel the other. See [G01](docs/audits/2026-11-25/GAP_ANALYSIS.md) before
 relying on automatic recovery. No fix was made during the audit.
 
 ### A passing suite is not a complete specification
@@ -426,7 +427,7 @@ benchmark had different input/overhead, so the numbers do not establish a speedu
 
 ## 12. Reproduce the audit and read the deliverables
 
-Use the [safe reproduction commands](evaluation/audits/2026-11-25/README.md). The helper creates
+Use the [current evaluation commands](evaluation/README.md) for published tooling. The private historical helper creates
 temporary databases and never seeds fixtures into the personal catalog. `probes` reports defects,
 `load` times synthetic cached requests, and `recovery` reads a source copy and starts the app against
 a separate restored target. Unknowns and unavailable environments stay explicit.
@@ -447,3 +448,24 @@ inspection. The graph is a navigation aid, not a correctness or scientific-quali
 The local learning prototype is a limited GO with loopback binding, one worker and verified manual
 backups. Internal multiuser and enterprise use are NO-GO. Describing those limits accurately is part
 of engineering the system.
+
+## November 26: Groq free models as Gemini fallback
+
+**What changed.** Live checks showed Gemini returning 503s, timeouts and 429s, while the old code only
+switched to Groq on quota errors, so a timeout ended the AI turn. The configured default model
+`llama-3.3-70b-versatile` also returned 404 for this account. `llm.generate_json` now hands the turn
+to Groq on any Gemini failure except the shared AI-turn cap, and `GROQ_MODEL` is an ordered list
+(`openai/gpt-oss-120b,openai/gpt-oss-20b`): 404/408/429/5xx moves to the next model, while auth errors
+stop immediately because another model would fail the same way.
+
+**Concepts.** Fallback classification (availability failures vs. configuration failures), ordered
+degradation, and honest reporting: every switch is a visible warning plus a `provider_fallback`
+activity event carrying the Gemini failure code. Validation is unchanged, so Groq output still passes
+schema checks and quote-membership checks, and a Groq citation mismatch still yields evidence only.
+
+**Tests.** `tests/test_llm_fallback.py` covers timeout/503/404 switching with reason codes, the Groq
+model walk, no-walk on auth errors, the shared cap blocking both providers, and 401/403/500 switching
+through the HTTP route.
+
+**Demo.** `scripts/record_live_demo.cjs` records the real UI against a live server; `scripts/build_live_demo.py`
+compresses backend waits to produce a 60-second MP4 (`docs/media/research-navigator-demo.mp4`).

@@ -1,7 +1,7 @@
 # Research Navigator — engineering scorecard
 
-**Current follow-up, November 26:** [Verification](docs/VERIFICATION.md) contains newer executed
-checks and [role alignment](docs/ROLE_ALIGNMENT.md) compares the implementation with the working-student
+**Current follow-up, November 26:** [Verification](../../VERIFICATION.md) contains newer executed
+checks and [role alignment](../../ROLE_ALIGNMENT.md) compares the implementation with the working-student
 JD. This scorecard retains the original November 25 measurements and their limitations.
 
 **Evidence date:** 2026-11-25. Personal single-process prototype, version 0.2.0. No application
@@ -72,5 +72,5 @@ authentication, guaranteed RTO/RPO, successful remote CI, or unlimited concurren
 | Enterprise production | **NO-GO** |
 
 Evidence and methods: [readiness report](PRODUCTION_READINESS_REPORT.md),
-[data quality report](DATA_QUALITY_REPORT.md), [audit bundle](evaluation/audits/2026-11-25/README.md),
-and [beginner learning guide](LEARNING_GUIDE.md).
+[data quality report](DATA_QUALITY_REPORT.md), [archive index](README.md) (private audit bundle),
+and [beginner learning guide](../../../LEARNING_GUIDE.md).

@@ -1,14 +1,14 @@
 # Research Navigator — data quality report
 
-**Later measurement, November 26:** See the [new aggregate evaluation](evaluation/published/2026-11-26.md)
-and [remediation record](docs/VERIFICATION.md). The denominators and observations below remain the
+**Later measurement, November 26:** See the [new aggregate evaluation](../../../evaluation/published/2026-11-26.md)
+and [remediation record](../../VERIFICATION.md). The denominators and observations below remain the
 November 25 population; they must not be mixed with the newer stored subset.
 
 **Captured:** 2026-11-25, 19:04:34 UTC. This report describes the stored local subset at that time.
 It does not estimate completeness across OpenAlex or verify publisher facts. The personal SQLite
 database was read without cleaning, updating, migrating or deleting its research records.
 
-The [evidence index](evaluation/audits/2026-11-25/README.md) explains E01–E15 and how to reproduce
+The private evidence index (see the [archive index](README.md)) explains E01–E15 and how to reproduce
 the checks. See the [readiness report](PRODUCTION_READINESS_REPORT.md) for runtime/deployment decisions
 and [gap analysis](GAP_ANALYSIS.md) for remediation. PASS/FAIL/PARTIAL/NOT VERIFIED have the same
 meaning across the reports.
@@ -115,7 +115,7 @@ Mocked tests reject unknown citation IDs, quotes absent from the excerpt, uncite
 model output, and unsupported evidence paths (E01). That engineering control **PASS** does not measure
 semantic faithfulness. Precision@K, Recall@K, semantic citation usefulness, factual accuracy and
 hallucination rate are **NOT VERIFIED** because no judged reference set exists. Use the existing
-[human-review rubric](evaluation/HUMAN_REVIEW.md) before reporting such metrics.
+[human-review rubric](../../../evaluation/HUMAN_REVIEW.md) before reporting such metrics.
 
 ## Integrity versus recoverability
 
