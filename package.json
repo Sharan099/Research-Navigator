@@ -1,0 +1,18 @@
+{
+  "name": "research-navigator",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Browser verification for the research workspace",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "check": "node --check frontend/app.js",
+    "test": "node --test tests/frontend.test.cjs",
+    "test:browser": "playwright test",
+    "test:browser:public": "playwright test --config playwright.public.config.cjs",
+    "test:browser:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.1",
+    "@playwright/test": "1.58.2"
+  }
+}

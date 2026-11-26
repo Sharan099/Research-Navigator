@@ -1,0 +1,152 @@
+name: Verify
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: requirements-dev.lock
+      - run: python -m pip install -r requirements-dev.lock
+      - run: python -m pip install --no-deps -e .
+      - run: python -m ruff check backend tests scripts migrations
+      - run: python -m pytest -q --cov --cov-report=term-missing --cov-report=xml
+        env:
+          GEMINI_API_KEY: ''
+          OPENALEX_API_KEY: ''
+      - run: python scripts/test_operations.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-${{ matrix.python }}
+          path: coverage.xml
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: research
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: research
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U research -d research"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements-dev.lock
+      - run: python -m pytest -q
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg://research:ci-only@127.0.0.1:5432/research
+          GEMINI_API_KEY: ''
+          OPENALEX_API_KEY: ''
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: python -m pip install -r requirements-dev.lock
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - run: npm run test:browser:public
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-report
+          path: |
+            playwright-report/
+            test-results/
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -r requirements-dev.lock
+      - run: python -m pip_audit --no-deps --disable-pip -r requirements.lock
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=high
+  container:
+    needs: [python, postgres, browser, dependency-audit]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --label org.opencontainers.image.revision=${{ github.sha }} -t research-navigator:verified .
+      - run: docker run -d --name navigator-check -p 127.0.0.1:8000:8000 research-navigator:verified
+      - name: Check readiness and nonroot execution
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8000/api/ready; then break; fi
+            sleep 1
+          done
+          curl --fail http://127.0.0.1:8000/api/ready
+          test "$(docker exec navigator-check id -u)" != 0
+      - run: docker logs navigator-check
+        if: failure()
+      - run: docker rm -f navigator-check
+        if: always()
+      - name: Save the tested image for release
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        run: docker save research-navigator:verified -o research-navigator-image.tar
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        with:
+          name: verified-local-release-image
+          path: research-navigator-image.tar
+          retention-days: 7
+  publish:
+    needs: container
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-local-release-image
+      - name: Load the image that passed container checks
+        run: docker load -i research-navigator-image.tar
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish the tested image
+        run: |
+          docker tag research-navigator:verified ghcr.io/sharan099/research-navigator:${{ github.sha }}
+          docker tag research-navigator:verified ghcr.io/sharan099/research-navigator:latest
+          docker push ghcr.io/sharan099/research-navigator:${{ github.sha }}
+          docker push ghcr.io/sharan099/research-navigator:latest

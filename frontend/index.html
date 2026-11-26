@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f6f8fc" />
+    <meta name="description" content="Explore scientific publications with a research-first assistant." />
+    <title>Research Navigator — Scientific discovery workspace</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">Skip to research workspace</a>
+    <div class="app-shell" id="app-shell">
+      <header class="topbar" aria-label="Research Navigator">
+        <a class="brand" href="/" aria-label="Research Navigator home">
+          <span class="brand-symbol" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span class="brand-name">research<span>navigator</span></span>
+          <span class="brand-tag">BETA</span>
+        </a>
+        <div class="topbar-right">
+          <button type="button" id="topics-button" class="quiet-button mobile-topics">Topics</button>
+          <button type="button" id="new-topic-button" class="quiet-button">+ New topic</button>
+          <button type="button" id="activity-button" class="quiet-button mobile-activity">Activity</button>
+          <span class="connection" id="connection-status" role="status" aria-live="polite">
+            <span class="connection-dot"></span><span id="connection-text">Checking service</span>
+          </span>
+        </div>
+      </header>
+
+      <div class="workspace-layout">
+      <aside class="topic-sidebar" aria-label="Research topics">
+        <h2>Topics</h2><div id="topic-list"></div>
+        <button id="load-more-topics" type="button" class="quiet-button" hidden>Earlier topics</button>
+        <p class="muted session-note">Conversations are saved in your local database.</p>
+      </aside>
+      <main class="workspace" id="workspace" tabindex="-1">
+        <h1 id="topic-title" class="topic-heading">New topic</h1>
+        <div class="conversation-controls"><button id="rename-topic" type="button" class="quiet-button">Rename</button><button id="delete-topic" type="button" class="quiet-button">Delete conversation</button></div>
+        <div class="filter-toolbar">
+          <details id="filter-panel" class="filter-panel">
+            <summary>Filters</summary>
+            <div class="filter-controls">
+              <label>Date range<select id="date-range">
+                <option value="auto">As requested</option><option value="all_time">Any time</option>
+                <option value="last_30_days">Last 30 days</option><option value="last_90_days">Last 90 days</option>
+                <option value="this_year">This year</option><option value="custom">Custom dates</option>
+              </select></label>
+              <div id="custom-dates" class="custom-dates" hidden>
+                <label>From<input id="date-from" type="date" /></label><label>Through<input id="date-to" type="date" /></label>
+              </div>
+              <label>Sort<select id="sort-mode"><option value="auto">As requested</option>
+                <option value="relevance">Relevance</option><option value="newest">Newest first</option><option value="most_cited">Most cited</option>
+              </select></label>
+              <button id="apply-filters" type="button" class="quiet-button">Apply filters</button>
+            </div>
+          </details>
+          <button id="latest-button" type="button" class="quiet-button">Latest research</button>
+        </div>
+        <div id="active-filters" class="active-filters" aria-label="Applied search filters"></div>
+        <p id="workspace-notice" class="muted" role="status"></p>
+        <p id="public-demo-notice" class="muted" hidden>Public demo: chats belong to this browser. Temporary storage may reset. Provider allowances are shared.</p>
+        <button id="retry-topic" type="button" class="quiet-button" hidden>Retry loading conversation</button>
+        <section class="hero" id="hero" aria-labelledby="hero-title">
+          <div class="eyebrow"><span class="eyebrow-spark"></span> SCIENTIFIC DISCOVERY, SIMPLIFIED</div>
+          <h1 id="hero-title">Explore research.<br /><span>Find what matters.</span></h1>
+          <p class="hero-description">Discover publications, explore a topic, and ask follow-up questions with cited abstract evidence.</p>
+
+          <div class="prompt-header"><span>TRY A RESEARCH QUESTION</span><span class="prompt-line"></span></div>
+          <div class="prompt-grid" aria-label="Example research questions">
+            <button class="prompt-card" data-prompt="Find recent research on tactile sensing for robotic grasping since 2022." type="button">
+              <span class="prompt-icon prompt-icon-blue" aria-hidden="true">✳</span>
+              <span>Tactile sensing for robotic grasping</span>
+              <span class="prompt-card-arrow" aria-hidden="true">↗</span>
+            </button>
+            <button class="prompt-card" data-prompt="What are the most cited research works about robot manipulation?" type="button">
+              <span class="prompt-icon prompt-icon-purple" aria-hidden="true">◈</span>
+              <span>Most cited robot manipulation papers</span>
+              <span class="prompt-card-arrow" aria-hidden="true">↗</span>
+            </button>
+            <button class="prompt-card" data-prompt="Show recent research about reinforcement learning for industrial robotics." type="button">
+              <span class="prompt-icon prompt-icon-orange" aria-hidden="true">⌁</span>
+              <span>Reinforcement learning in industrial robotics</span>
+              <span class="prompt-card-arrow" aria-hidden="true">↗</span>
+            </button>
+          </div>
+        </section>
+
+        <button id="older-messages" type="button" class="quiet-button" hidden>Load earlier messages</button>
+        <section class="conversation" id="conversation" aria-label="Research conversation"></section>
+        <p id="chat-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+
+        <div class="composer-area">
+          <div id="topic-actions" class="topic-actions" hidden>
+            <button id="summarize-button" type="button" class="quiet-button">Summarize topic</button>
+            <button id="compare-button" type="button" class="quiet-button">Compare papers</button>
+            <button id="compare-selected-button" type="button" class="quiet-button" hidden>Compare selected</button>
+            <button id="refresh-button" type="button" class="quiet-button">Refresh sources</button>
+          </div>
+          <form class="composer" id="search-form">
+            <div id="paper-scope" class="paper-scope" hidden><span id="scope-title"></span><button id="clear-scope" type="button" class="quiet-button">Back to topic</button></div>
+            <label class="sr-only" for="research-question">Ask a research question</label>
+            <textarea id="research-question" name="message" rows="2" maxlength="500" placeholder="Ask about a research topic, method, researcher, or trend..." required></textarea>
+            <div class="composer-footer">
+              <span class="composer-hint">Ask a follow-up or refine the search.<span class="keyboard-hint"> Enter to send · Shift+Enter for a new line</span></span>
+              <button id="search-button" type="submit" class="search-button"><span id="search-button-text">Send</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            </div>
+          </form>
+          <p class="disclaimer">AI explanations use available abstracts. Check the cited sources for full context.</p>
+        </div>
+
+        <details class="process-guide" id="process-guide">
+          <summary><span class="guide-mark" aria-hidden="true">?</span> How the research assistant works <span class="guide-chevron" aria-hidden="true">⌄</span></summary>
+          <div class="guide-body">
+            <ol>
+              <li><strong>Understand:</strong> Gemini identifies your topic and priorities, asking a focused follow-up when needed. A basic rule parser is used if Gemini is unavailable.</li>
+              <li><strong>Check locally:</strong> It checks for a complete saved preview in the local database.</li>
+              <li><strong>Discover:</strong> If local coverage is insufficient, it requests more metadata from OpenAlex.</li>
+              <li><strong>Validate and save:</strong> It checks and stores records with their source identifiers.</li>
+              <li><strong>Explain:</strong> When asked, it uses available abstracts and checks supporting citation excerpts. Dates filter publication time; retrieval time is shown separately.</li>
+            </ol>
+          </div>
+        </details>
+        <details class="process-guide" id="usage-panel">
+          <summary>Daily usage</summary>
+          <div class="guide-body">
+            <p id="usage-status" class="muted" role="status">Expand to check today's allowance.</p>
+            <ul id="usage-values" class="usage-values"></ul>
+            <p class="muted">Allowances reset daily in UTC. Local paper details and saved research operations remain available when AI usage is exhausted.</p>
+          </div>
+        </details>
+      </main>
+      <aside class="activity-panel" aria-labelledby="activity-title">
+        <h2 id="activity-title">Request activity</h2><p id="activity-status" role="status" aria-live="polite">Ready</p>
+        <div id="activity-list" class="activity-list"></div>
+        <p class="muted">Live tool activity and source checks. Expand a step for details.</p>
+      </aside>
+      </div>
+      <dialog id="activity-drawer" class="activity-drawer" aria-labelledby="mobile-activity-title"><div class="dialog-heading"><h2 id="mobile-activity-title">Request activity</h2><button id="close-activity" type="button" class="quiet-button">Close</button></div><div id="mobile-activity-list" class="activity-list"></div></dialog>
+      <dialog id="rename-dialog" aria-labelledby="rename-title"><form id="rename-form"><h2 id="rename-title">Rename conversation</h2><label for="rename-value">Topic name</label><input id="rename-value" maxlength="120" required /><p id="rename-error" class="dialog-error" role="alert"></p><div class="dialog-actions"><button id="cancel-rename" type="button" class="quiet-button">Cancel</button><button id="save-rename" type="submit" class="search-button">Save</button></div></form></dialog>
+      <dialog id="delete-dialog" aria-labelledby="delete-title"><h2 id="delete-title">Delete conversation?</h2><p>This removes its messages and activity. Shared research records remain available.</p><p id="delete-error" class="dialog-error" role="alert"></p><div class="dialog-actions"><button id="cancel-delete" type="button" class="quiet-button">Cancel</button><button id="confirm-delete" type="button" class="danger-button">Delete conversation</button></div></dialog>
+      <dialog id="topic-dialog" class="topic-dialog" aria-labelledby="mobile-topics-title">
+        <div class="dialog-heading"><h2 id="mobile-topics-title">Topics</h2><button id="close-topics" type="button" class="quiet-button">Close</button></div>
+        <div id="mobile-topic-list"></div><button id="mobile-load-more-topics" type="button" class="quiet-button" hidden>Earlier topics</button><p class="muted">Saved in your local database.</p>
+      </dialog>
+    </div>
+  </body>
+</html>
